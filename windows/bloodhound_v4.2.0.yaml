@@ -1,0 +1,63 @@
+---
+- hosts: all
+  gather_facts: false
+  vars:
+    ansible_python_interpreter: "/usr/bin/python3"
+    target_addr: '{{ hostvars[inventory_hostname]["inventory_hostname"] }}'
+  
+  tasks:
+  - name: Add target to Ansible Hosts
+    add_host:
+      name: '{{ target_addr }}'
+      ansible_connection: winrm
+      ansible_winrm_transport: ntlm
+      ansible_winrm_server_cert_validation: ignore
+      ansible_winrm_port: 5986
+      group: "target"
+
+- hosts: "target"
+  gather_facts: true
+  vars_files:
+    - vars.yml
+  vars:
+    ansible_python_interpreter: "/usr/bin/python3"
+  
+  tasks:
+  - name: Wait for system to become reachable over ip
+    wait_for_connection:
+      timeout: 900
+
+  - include_tasks: 'tasks/install_firefox.yml'
+  - include_tasks: 'tasks/install_java_17.yml'
+  - include_tasks: 'tasks/install_neo4j_5.5.yml'
+
+  - name: Create temp structure
+    ansible.windows.win_file:
+      path: "C:/temp"
+      state: directory
+
+  - name: Create tools structure
+    ansible.windows.win_file:
+      path: "C:/tools"
+      state: directory
+
+  - name: Download BloodHound v3.0.5
+    win_get_url:
+      url: https://github.com/BloodHoundAD/BloodHound/releases/download/4.2.0/BloodHound-win32-x64.zip
+      dest: "C:/temp/BloodHound.zip"
+      validate_certs: false
+
+  - name: Unzip BloodHound
+    community.windows.win_unzip:
+      src: "C:/temp/BloodHound.zip"
+      dest: "C:/tools/BloodHound"
+      creates: "C:/tools/BloodHound"
+
+  - name: Tools | Create BloodHound application shortcut on the desktop
+    community.windows.win_shortcut:
+      src: "C:/tools/BloodHound/BloodHound-win32-x64/BloodHound.exe"
+      dest: "C:/Users/Public/Desktop/BloodHound.lnk"
+      icon: "C:/tools/BloodHound/BloodHound-win32-x64/BloodHound.exe,0"
+
+
+
