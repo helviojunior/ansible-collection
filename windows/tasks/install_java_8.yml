@@ -1,0 +1,49 @@
+---
+- name: Java 8 | Check if java is installed
+  ignore_errors: yes
+  win_command: java -version
+  register: java_output
+
+- name: Java 8 | Version
+  debug:
+    msg: "JAVA version is: {{ java_output.stderr_lines[0] }}"
+  when:  java_output is success
+
+- name: Java 8 | Create temp structure
+  ansible.windows.win_file:
+    path: "C:/temp"
+    state: directory
+  when: java_output is failed
+
+- name: Java 8 | Download JDK 8
+  win_get_url:
+    url: https://builds.openlogic.com/downloadJDK/openlogic-openjdk-jre/8u362-b09/openlogic-openjdk-jre-8u362-b09-windows-x64.msi
+    dest: "C:/temp/openjdk_8u362-b09-windows-x64.msi"
+    validate_certs: false
+  when: java_output is failed
+
+- name: Java 8 | Installing Java
+  ansible.windows.win_package:
+    path: C:\Temp\openjdk_8u362-b09-windows-x64.msi
+    arguments: 
+      - "ADDLOCAL=FeatureMain,FeatureEnvironment,FeatureJarFileRunWith,FeatureJavaHome"
+    state: present
+  when: java_output is failed
+
+- name: Java 8 | Ensure that Java are present on the global system path
+  ansible.windows.win_path:
+    name: PATH
+    elements: 
+      - 'C:\Program Files\OpenJDK\jre-8.0.362.09-hotspot\bin'
+    scope: machine
+    state: present
+
+- name: Java 8 | Check if java is installed
+  win_command: java -version
+  register: java_output
+
+- name: Java 8 | Version
+  debug:
+    msg: "JAVA version is: {{ java_output.stderr_lines[0] }}"
+  when:  java_output is success
+

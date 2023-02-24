@@ -1,0 +1,49 @@
+---
+- name: Java 17 | Check if java is installed
+  ignore_errors: yes
+  win_command: java -version
+  register: java_output
+
+- name: Java 17 | Version
+  debug:
+    msg: "JAVA version is: {{ java_output.stderr_lines[0] }}"
+  when:  java_output is success
+
+- name: Java 17 | Create temp structure
+  ansible.windows.win_file:
+    path: "C:/temp"
+    state: directory
+  when: java_output is failed
+
+- name: Java 17 | Download JDK 17.0.6
+  win_get_url:
+    url: https://download.oracle.com/java/17/archive/jdk-17.0.6_windows-x64_bin.exe
+    dest: "C:/temp/jdk-17.0.6_windows-x64_bin.exe"
+    validate_certs: false
+  when: java_output is failed
+
+- name: Java 17 | Installing JRE
+  win_command: 
+    argv:
+      - jdk-17.0.6_windows-x64_bin.exe
+      - /s
+    chdir: C:/temp/
+  when: java_output is failed
+
+- name: Java 17 | Ensure that Java are present on the global system path
+  ansible.windows.win_path:
+    name: PATH
+    elements: 
+      - C:\Program Files\Java\jdk-17\bin
+    scope: machine
+    state: absent
+
+- name: Java 17 | Check if java is installed
+  win_command: java -version
+  register: java_output
+
+- name: Java 17 | Version
+  debug:
+    msg: "JAVA version is: {{ java_output.stderr_lines[0] }}"
+  when:  java_output is success
+

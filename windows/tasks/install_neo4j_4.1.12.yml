@@ -1,0 +1,47 @@
+---
+- name: Neo4j | Create temp structure
+  ansible.windows.win_file:
+    path: "C:/temp"
+    state: directory
+
+- name: Neo4j | Download Neo4j 4.1.12
+  win_get_url:
+    url: https://dist.neo4j.org/neo4j-community-4.1.12-windows.zip
+    dest: "C:/temp/neo4j-community-4.1.12-windows.zip"
+    validate_certs: false
+
+- name: Neo4j | Unzip Neo4j
+  community.windows.win_unzip:
+    src: "C:/temp/neo4j-community-4.1.12-windows.zip"
+    dest: "C:/neo4j"
+    creates: "C:/neo4j/"
+
+- name: Neo4j | Ensure that Java NEO4J_HOME exists
+  ansible.windows.win_path:
+    name: NEO4J_HOME
+    elements: 
+      - C:\neo4j\neo4j-community-4.1.12
+    scope: machine
+    state: present
+
+- name: Neo4j | Install as a service
+  win_shell: neo4j install-service
+  args:
+    executable: cmd
+    chdir: C:\neo4j\neo4j-community-4.1.12\bin
+
+- name: Neo4j | Start the neo4j service
+  win_service:
+    name: neo4j
+    state: started  
+
+- name: Neo4j | Reset neo4j password
+  win_shell: neo4j-admin set-initial-password 12345678
+  args:
+    executable: cmd
+    chdir: C:\neo4j\neo4j-community-4.1.12\bin
+
+- name: Neo4j | Restart the neo4j service
+  win_service:
+    name: neo4j
+    state: restarted  

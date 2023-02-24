@@ -1,0 +1,49 @@
+---
+- name: Java 11 | Check if java is installed
+  ignore_errors: yes
+  win_command: java -version
+  register: java_output
+
+- name: Java 11 | Version
+  debug:
+    msg: "JAVA version is: {{ java_output.stderr_lines[0] }}"
+  when:  java_output is success
+
+- name: Java 11 | Create temp structure
+  ansible.windows.win_file:
+    path: "C:/temp"
+    state: directory
+  when: java_output is failed
+
+- name: Java 11 | Download JDK
+  win_get_url:
+    url: https://builds.openlogic.com/downloadJDK/openlogic-openjdk/11.0.18+10/openlogic-openjdk-11.0.18+10-windows-x64.msi
+    dest: "C:/temp/openjdk-11.msi"
+    validate_certs: false
+  when: java_output is failed
+
+- name: Java 11 | Installing JDK
+  ansible.windows.win_package:
+    path: C:\temp\openjdk-11.msi
+    arguments: 
+      - 'ADDLOCAL=FeatureMain,FeatureEnvironment,FeatureJarFileRunWith,FeatureJavaHome'
+    state: present
+  when: java_output is failed
+
+- name: Java 11 | Ensure that Java are present on the global system path
+  ansible.windows.win_path:
+    name: PATH
+    elements: 
+      - 'C:\Program Files\OpenJDK\jdk-11.0.18.10-hotspot\bin'
+    scope: machine
+    state: present
+
+- name: Java 11 | Check if java is installed
+  win_command: java -version
+  register: java_output
+
+- name: Java 11 | Version
+  debug:
+    msg: "JAVA version is: {{ java_output.stderr_lines[0] }}"
+  when:  java_output is success
+
