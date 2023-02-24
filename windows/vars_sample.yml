@@ -1,0 +1,3 @@
+# Sample vars.yml file
+ansible_user: Administrator
+ansible_password: "SecretPassword"
