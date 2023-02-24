@@ -2,6 +2,15 @@
 
 General Ansible Scripts
 
+## Colection
+
+### Windows
+
+* [x] [Enable Remote Desktop](windows/enable_remote_desktop.yml)
+* [x] [Install BloodHound v3.0.5](windows/bloodhound_v3.0.5.yaml)
+* [x] [Install BloodHound v4.2.0](windows/bloodhound_v4.2.0.yaml)
+
+
 ## Installing (client)
 
 ```bash
